@@ -2,6 +2,7 @@ package structquery
 
 import (
 	"github.com/google/go-cmp/cmp"
+	"github.com/hashicorp/go-multierror"
 	"testing"
 	"reflect"
 )
@@ -105,9 +106,16 @@ func TestMultiArrayArrayMatch(t *testing.T) {
 	}
 }
 
-func checkErrs(t *testing.T, errs []error) {
+func checkErrs(t *testing.T, err error) {
 	t.Helper()
-	for _, err := range errs {
+	if err == nil {
+		return
+	}
+	if merr, ok := err.(*multierror.Error); ok {
+		for _, err := range merr.Errors {
+			t.Error(err)
+		}
+	} else {
 		t.Error(err)
 	}
 	if t.Failed() {
