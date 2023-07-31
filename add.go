@@ -1,87 +1,54 @@
 package structquery
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
-	"strconv"
+	"github.com/ETLHero/cram"
+	"github.com/hashicorp/go-multierror"
+	"fmt"
 )
 
-// Add adds a new value at the specified path.
+// Add adds the provided value at the specified path. Overrides the value if target is
+// a field. If target is a slice, append to slice. If target is a map and the key
+// doesn't exist, create the key with value. If target is a map and the key does exist,
+// override the value.
 func Add(obj interface{}, path string, value interface{}) error {
-	pathParts := strings.Split(path, ".")
-
-	v := reflect.ValueOf(obj)
-	if v.Kind() == reflect.Ptr && !v.IsNil() {
-		v = v.Elem()
+	p := strings.Split(path, ".")
+	last := p[len(p)-1]
+	vobj := reflect.ValueOf(obj)
+	v := reflect.ValueOf(value)
+	if vobj.Kind() == reflect.Ptr && !vobj.IsNil() {
+		vobj = vobj.Elem()
 	}
-
-	return addRecursive(v, pathParts, 0, value)
-}
-
-// addRecursive is a helper function to implement adding values.
-func addRecursive(v reflect.Value, pathParts []string, pathIndex int, value interface{}) error {
-	if pathIndex >= len(pathParts) {
-		return fmt.Errorf("invalid path: index out of range")
+	
+	vs, err := Match(obj, p)
+	if err != nil {
+		return fmt.Errorf("matching: %w", err)
 	}
-
-	part := pathParts[pathIndex]
-
-	switch v.Kind() {
-	case reflect.Struct:
-		if pathIndex == len(pathParts)-1 {
-			if part == "*" {
-			} else {
-				field := v.FieldByName(part)
-				if !field.IsValid() {
-					return fmt.Errorf("invalid field name: %s", part)
-				}
-				if !field.CanSet() {
-					return fmt.Errorf("cannot set field: %s", part)
-				}
-				field.Set(reflect.ValueOf(value))
+	
+	for i := range vs {
+		if vs[i].Child == nil {
+			// vs[i].Parent is a Map
+			//TODO: Write a test for this above claim
+			kt := vs[i].Parent.Type().Key()
+			ka := reflect.New(kt)
+			err := cram.Into(ka.Interface(), last)
+			if err != nil {
+				err = multierror.Append(err, fmt.Errorf("adding new key to map: %w", err))
+				continue
 			}
-		} else {
-			field := v.FieldByName(part)
-			if !field.IsValid() {
-				return fmt.Errorf("invalid field name: %s", part)
+			if !vs[i].Parent.CanSet() {
+				err = multierror.Append(err, fmt.Errorf("adding new key to map: %w", err))
+				continue
 			}
-			return addRecursive(field, pathParts, pathIndex+1, value)
+			vs[i].Parent.SetMapIndex(ka.Elem(), v)
+			continue
 		}
-	case reflect.Map:
-		if pathIndex == len(pathParts)-1 {
-			if !v.CanSet() {
-				return fmt.Errorf("cannot set field: %s", part)
-			}
-			key := reflect.ValueOf(part)
-			val := reflect.ValueOf(value)
-			v.SetMapIndex(key, val)
-		} else {
-			val := v.MapIndex(reflect.ValueOf(part))
-			if val.IsValid() {
-				return addRecursive(val, pathParts, pathIndex+1, value)
-			} else {
-				return fmt.Errorf("path not found: %s", strings.Join(pathParts[:pathIndex+1], "."))
-			}
+		if !vs[i].Child.CanSet() {
+			err = multierror.Append(err, fmt.Errorf("adding new key to map: %w", err))
+			continue
 		}
-	case reflect.Slice:
-		if pathIndex == len(pathParts)-1 {
-			if v.Type().Elem().Kind() != reflect.ValueOf(value).Kind() {
-				return fmt.Errorf("value type %s does not match slice element type %s (parent type %s)", reflect.ValueOf(value).Type(), v.Type().Elem(), reflect.ValueOf(value).Type())
-			}
-			newVal := reflect.Append(v, reflect.ValueOf(value))
-			v.Set(newVal)
-		} else {
-			index, err := strconv.Atoi(part)
-			if err != nil || index < 0 || index >= v.Len() {
-				return fmt.Errorf("invalid array index: %s", part)
-			}
-			val := v.Index(index)
-			return addRecursive(val, pathParts, pathIndex+1, value)
-		}
-	default:
-		return fmt.Errorf("unsupported type: %s", v.Type())
+		vs[i].Child.Set(v)
 	}
-
-	return nil
+	return err
 }

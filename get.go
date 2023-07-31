@@ -1,12 +1,19 @@
 package structquery
 
+import (
+	"strings"
+)
+
 // Get retrieves the value from the object at the specified path.
 // If a wildcard is used, a slice of matching values is returned.
 func Get(obj any, path string) ([]any, error) {
-	vs, err := Match(obj, path)
-	an := make([]any, len(vs))
+	p := strings.Split(path, ".")
+	vs, err := Match(obj, p)
+	an := make([]any, 0, len(vs))
 	for i := range vs {
-		an[i] = vs[i].Interface()
+		if vs[i].Child != nil {
+			an = append(an, vs[i].Child.Interface())
+		}
 	}
 	return an, err
 }

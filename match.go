@@ -6,9 +6,13 @@ import (
 	"github.com/ETLHero/cram"
 	"github.com/hashicorp/go-multierror"
 	"reflect"
-	"strings"
 	"strconv"
 )
+
+type MatchStack struct {
+	Child *reflect.Value
+	Parent *reflect.Value
+}
 
 var (
 	ErrUnsupportedType = errors.New("unsupported type")
@@ -18,15 +22,14 @@ var (
 )
 
 // Match will find elements of the provided obj and return refrences to their values
-func Match(obj interface{}, path string) ([]reflect.Value, error) {
+func Match(obj interface{}, path []string) ([]MatchStack, error) {
 	v := reflect.ValueOf(obj)
-	p := strings.Split(path, ".")
-	return matchRecursive(v, p)
+	return matchRecursive(v, path)
 }
 
-func matchRecursive(v reflect.Value, path []string) ([]reflect.Value, error) {
+func matchRecursive(v reflect.Value, path []string) ([]MatchStack, error) {
 	if len(path) < 1 {
-		return []reflect.Value{v}, nil
+		return []MatchStack{{Child:&v}}, nil
 	}
 
 	sv := v
@@ -35,14 +38,19 @@ func matchRecursive(v reflect.Value, path []string) ([]reflect.Value, error) {
 	for sv.Kind() == reflect.Ptr && !sv.IsNil() {
 		sv = sv.Elem()
 	}
-
+	
+	var vals []MatchStack
+	var err error
 	if r == "*" {
-		return matchAllRecursive(sv, path)
+		vals, err = matchAllRecursive(sv, path)
+	} else {
+		vals, err = matchSingleRecursive(sv, path)
 	}
-	return matchSingleRecursive(sv, path)
+	
+	return vals, err
 }
 
-func matchSingleRecursive(v reflect.Value, path []string) ([]reflect.Value, error) {
+func matchSingleRecursive(v reflect.Value, path []string) ([]MatchStack, error) {
 	r := path[0]
 	nupath := path[1:]
 
@@ -61,6 +69,9 @@ func matchSingleRecursive(v reflect.Value, path []string) ([]reflect.Value, erro
 			}
 			c := v.MapIndex(kh.Elem())
 			if !c.IsValid() {
+				if len(nupath) == 0 {
+					return []MatchStack{{Parent:&v}}, nil
+				}
 				return nil, fmt.Errorf("%w: %s", ErrInvalidKey, r)
 			}
 			return matchRecursive(c, nupath)
@@ -76,13 +87,12 @@ func matchSingleRecursive(v reflect.Value, path []string) ([]reflect.Value, erro
 	}
 }
 
-func matchAllRecursive(v reflect.Value, path []string) (svs []reflect.Value, serrs error) {
+func matchAllRecursive(v reflect.Value, path []string) (svs []MatchStack, serrs error) {
 	nupath := path[1:]
 
 	switch v.Kind() {
 		case reflect.Struct:
 			n := v.NumField()
-			svs = make([]reflect.Value, 0, n)
 			for i := 0; i < n; i++ {
 				c := v.Field(i)
 				vs, errs := matchRecursive(c, nupath)
@@ -91,8 +101,6 @@ func matchAllRecursive(v reflect.Value, path []string) (svs []reflect.Value, ser
 			}
 			return
 		case reflect.Map:
-			n := v.Len()
-			svs = make([]reflect.Value, 0, n)
 			iter := v.MapRange()
 			
 			for iter.Next() {
@@ -103,7 +111,6 @@ func matchAllRecursive(v reflect.Value, path []string) (svs []reflect.Value, ser
 			return
 		case reflect.Slice, reflect.Array:
 			n := v.Len()
-			svs = make([]reflect.Value, 0, n)
 			for i := 0; i < n; i++ {
 				vs, errs := matchRecursive(v.Index(i), nupath)
 				svs = append(svs, vs...)
