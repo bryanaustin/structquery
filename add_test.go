@@ -28,7 +28,7 @@ func TestAddMapSlice(t *testing.T) {
 	if !ok {
 		t.Fatal("Expected to find child named \"node\"")
 	}
-	if em := cmp.Diff(node, []string{"one", "two", "ten"}); em != "" {
+	if em := cmp.Diff(*node, []string{"one", "two", "ten"}); em != "" {
 		t.Error(em)
 	}
 }

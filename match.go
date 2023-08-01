@@ -34,7 +34,7 @@ func matchRecursive(v reflect.Value, path []string) ([]MatchStack, error) {
 	}
 
 	if len(path) < 1 {
-		return []MatchStack{{Child: &v}}, nil
+		return []MatchStack{{Child: &sv}}, nil
 	}
 
 	r := path[0]

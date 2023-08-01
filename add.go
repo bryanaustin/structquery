@@ -40,6 +40,9 @@ func Add(obj any, path string, value any) error {
 			err = multierror.Append(err, ErrCantSet)
 			continue
 		}
+		if vs[i].Child.Kind() == reflect.Slice {
+			v = reflect.Append(*vs[i].Child, v)
+		}
 		vs[i].Child.Set(v)
 	}
 	return err
