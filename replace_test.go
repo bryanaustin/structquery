@@ -1,8 +1,8 @@
 package structquery
 
 import (
-	"testing"
 	"github.com/google/go-cmp/cmp"
+	"testing"
 )
 
 func TestReplaceMapSingle(t *testing.T) {
@@ -24,4 +24,3 @@ func TestReplaceMapSingle(t *testing.T) {
 		t.Error(em)
 	}
 }
-

@@ -1,8 +1,8 @@
 package structquery
 
 import (
-	"testing"
 	"github.com/google/go-cmp/cmp"
+	"testing"
 )
 
 func TestRemoveMapSingle(t *testing.T) {
@@ -26,8 +26,8 @@ func TestRemoveMapSingle(t *testing.T) {
 func TestRemoveMapMulti(t *testing.T) {
 	t.Parallel()
 	focus := map[string]*map[string]int{
-		"first":{"one":1, "two":2},
-		"last":{"ten":10, "six":6},
+		"first": {"one": 1, "two": 2},
+		"last":  {"ten": 10, "six": 6},
 	}
 
 	err := Remove(focus, "last.*")
@@ -43,9 +43,9 @@ func TestRemoveMapMulti(t *testing.T) {
 }
 
 func TestRemoveStructSingle(t *testing.T) {
-	focus := map[string]*Testmany {
-		"zeebra":{Primary:"uuu",Secondary:"yty"},
-		"elephant":{Primary:"(O)",Secondary:"^u^"},
+	focus := map[string]*Testmany{
+		"zeebra":   {Primary: "uuu", Secondary: "yty"},
+		"elephant": {Primary: "(O)", Secondary: "^u^"},
 	}
 
 	err := Remove(&focus, "zeebra.Primary")
@@ -64,9 +64,9 @@ func TestRemoveStructSingle(t *testing.T) {
 }
 
 func TestRemoveStructMulti(t *testing.T) {
-	focus := map[string]*Testmany {
-		"zeebra":{Primary:"uuu",Secondary:"yty"},
-		"elephant":{Primary:"(O)",Secondary:"^u^"},
+	focus := map[string]*Testmany{
+		"zeebra":   {Primary: "uuu", Secondary: "yty"},
+		"elephant": {Primary: "(O)", Secondary: "^u^"},
 	}
 
 	err := Remove(&focus, "elephant.*")
@@ -83,4 +83,3 @@ func TestRemoveStructMulti(t *testing.T) {
 		t.Error(em)
 	}
 }
-

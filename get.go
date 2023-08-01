@@ -17,4 +17,3 @@ func Get(obj any, path string) ([]any, error) {
 	}
 	return an, err
 }
-

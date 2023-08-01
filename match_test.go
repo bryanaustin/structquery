@@ -3,8 +3,8 @@ package structquery
 import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/go-multierror"
-	"testing"
 	"reflect"
+	"testing"
 )
 
 type Bravo struct {
@@ -19,11 +19,11 @@ type Alpha struct {
 
 func TestBasicMapSliceMatch(t *testing.T) {
 	t.Parallel()
-	focus := map[string][]string{"node":{"one", "two"}}
-	ms, errs := Match(focus, []string{"node","1"})
+	focus := map[string][]string{"node": {"one", "two"}}
+	ms, errs := Match(focus, []string{"node", "1"})
 	checkErrs(t, errs)
 	expectedchild := reflect.ValueOf(focus["node"][1])
-	expected := []MatchStack{{Child:&expectedchild}}
+	expected := []MatchStack{{Child: &expectedchild}}
 	if msg := cmp.Diff(ms, expected); msg != "" {
 		t.Error(msg)
 	}
@@ -32,13 +32,13 @@ func TestBasicMapSliceMatch(t *testing.T) {
 func TestBasicMapMapMatch(t *testing.T) {
 	t.Parallel()
 	focus := map[string]map[string]string{
-		"alpha":{"one":"111","two":"222"},
-		"bravo":{"nine":"999","five":"555"},
+		"alpha": {"one": "111", "two": "222"},
+		"bravo": {"nine": "999", "five": "555"},
 	}
-	ms, errs := Match(focus, []string{"alpha","two"})
+	ms, errs := Match(focus, []string{"alpha", "two"})
 	checkErrs(t, errs)
 	expectedchild := reflect.ValueOf(focus["alpha"]["two"])
-	expected := []MatchStack{{Child:&expectedchild}}
+	expected := []MatchStack{{Child: &expectedchild}}
 	if msg := cmp.Diff(ms, expected); msg != "" {
 		t.Error(msg)
 	}
@@ -46,14 +46,14 @@ func TestBasicMapMapMatch(t *testing.T) {
 
 func TestBasicStructStructMatch(t *testing.T) {
 	t.Parallel()
-	focus := Alpha{A:Bravo{456,123},B:Bravo{9999,20}}
-	ms, errs := Match(focus, []string{"*","X"})
+	focus := Alpha{A: Bravo{456, 123}, B: Bravo{9999, 20}}
+	ms, errs := Match(focus, []string{"*", "X"})
 	checkErrs(t, errs)
 	expectedchild1 := reflect.ValueOf(focus.A.X)
 	expectedchild2 := reflect.ValueOf(focus.B.X)
 	expected := []MatchStack{
-		{Child:&expectedchild1},
-		{Child:&expectedchild2}}
+		{Child: &expectedchild1},
+		{Child: &expectedchild2}}
 	if msg := cmp.Diff(ms, expected); msg != "" {
 		t.Error(msg)
 	}
@@ -61,11 +61,11 @@ func TestBasicStructStructMatch(t *testing.T) {
 
 func TestBasicSliceSliceMatch(t *testing.T) {
 	t.Parallel()
-	focus := [][]int{{9,8,7},{5}}
-	ms, errs := Match(focus, []string{"0","2"})
+	focus := [][]int{{9, 8, 7}, {5}}
+	ms, errs := Match(focus, []string{"0", "2"})
 	checkErrs(t, errs)
 	expectedchild := reflect.ValueOf(focus[0][2])
-	expected := []MatchStack{{Child:&expectedchild}}
+	expected := []MatchStack{{Child: &expectedchild}}
 	if msg := cmp.Diff(ms, expected); msg != "" {
 		t.Error(msg)
 	}
@@ -73,16 +73,16 @@ func TestBasicSliceSliceMatch(t *testing.T) {
 
 func TestMultiSliceSliceMatch(t *testing.T) {
 	t.Parallel()
-	focus := [][]int{{22,33,44,555,666},{99,44,1},{11,55,77,88}}
-	ms, errs := Match(focus, []string{"1","*"})
+	focus := [][]int{{22, 33, 44, 555, 666}, {99, 44, 1}, {11, 55, 77, 88}}
+	ms, errs := Match(focus, []string{"1", "*"})
 	checkErrs(t, errs)
 	expectedchild1 := reflect.ValueOf(focus[1][0])
 	expectedchild2 := reflect.ValueOf(focus[1][1])
 	expectedchild3 := reflect.ValueOf(focus[1][2])
 	expected := []MatchStack{
-		{Child:&expectedchild1},
-		{Child:&expectedchild2},
-		{Child:&expectedchild3}}
+		{Child: &expectedchild1},
+		{Child: &expectedchild2},
+		{Child: &expectedchild3}}
 	if msg := cmp.Diff(ms, expected); msg != "" {
 		t.Error(msg)
 	}
@@ -90,14 +90,14 @@ func TestMultiSliceSliceMatch(t *testing.T) {
 
 func TestMultiSliceSliceMatchTwo(t *testing.T) {
 	t.Parallel()
-	focus := [][]int{{6},{99,44,1}}
-	ms, errs := Match(focus, []string{"*","0"})
+	focus := [][]int{{6}, {99, 44, 1}}
+	ms, errs := Match(focus, []string{"*", "0"})
 	checkErrs(t, errs)
 	expectedchild1 := reflect.ValueOf(focus[0][0])
 	expectedchild2 := reflect.ValueOf(focus[1][0])
 	expected := []MatchStack{
-		{Child:&expectedchild1},
-		{Child:&expectedchild2}}
+		{Child: &expectedchild1},
+		{Child: &expectedchild2}}
 	if msg := cmp.Diff(ms, expected); msg != "" {
 		t.Error(msg)
 	}
@@ -105,27 +105,27 @@ func TestMultiSliceSliceMatchTwo(t *testing.T) {
 
 func TestMultiArrayArrayMatch(t *testing.T) {
 	t.Parallel()
-	focus := [2][3]int{{6},{99,44,1}}
-	ms, errs := Match(focus, []string{"*","1"})
+	focus := [2][3]int{{6}, {99, 44, 1}}
+	ms, errs := Match(focus, []string{"*", "1"})
 	checkErrs(t, errs)
 	expectedchild1 := reflect.ValueOf(focus[0][1])
 	expectedchild2 := reflect.ValueOf(focus[1][1])
 	expected := []MatchStack{
-		{Child:&expectedchild1},
-		{Child:&expectedchild2}}
+		{Child: &expectedchild1},
+		{Child: &expectedchild2}}
 	if msg := cmp.Diff(ms, expected); msg != "" {
 		t.Error(msg)
 	}
 }
 
-func TestMapNilChild( t *testing.T) {
+func TestMapNilChild(t *testing.T) {
 	t.Skip() // Can't compare maps
 	t.Parallel()
-	focus := map[string]int{"alpha":1,"barvo":2}
+	focus := map[string]int{"alpha": 1, "barvo": 2}
 	ms, errs := Match(focus, []string{"zulu"})
 	checkErrs(t, errs)
 	expectedparent := reflect.ValueOf(focus)
-	expected := []MatchStack{{Parent:&expectedparent}}
+	expected := []MatchStack{{Parent: &expectedparent}}
 	if msg := cmp.Diff(ms, expected); msg != "" {
 		t.Error(msg)
 	}

@@ -81,4 +81,3 @@ func replaceRecursive(v reflect.Value, pathParts []string, pathIndex int, value 
 		return nil, fmt.Errorf("unsupported type: %s", v.Type())
 	}
 }
-

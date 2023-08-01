@@ -1,8 +1,8 @@
 package structquery
 
 import (
-	"testing"
 	"github.com/google/go-cmp/cmp"
+	"testing"
 )
 
 func TestGetSingle(t *testing.T) {
@@ -16,10 +16,10 @@ func TestGetSingle(t *testing.T) {
 		}
 	}{
 		A: "root-ish",
-		B: struct{
+		B: struct {
 			C string
 			D int
-		}{C: "nested", D:8998},
+		}{C: "nested", D: 8998},
 	}
 
 	seelist, err := Get(focus, "B.C")
@@ -66,14 +66,14 @@ func TestGetMapSingle(t *testing.T) {
 }
 
 type Testmany struct {
-	Primary string
+	Primary   string
 	Secondary string
 }
 
 func TestGetManyStruct(t *testing.T) {
-	focus := map[string]Testmany {
-		"zeebra":{Primary:"uuu",Secondary:"yty"},
-		"elephant":{Primary:"(O)",Secondary:"^u^"},
+	focus := map[string]Testmany{
+		"zeebra":   {Primary: "uuu", Secondary: "yty"},
+		"elephant": {Primary: "(O)", Secondary: "^u^"},
 	}
 
 	zeelist, err := Get(focus, "zeebra.*")
@@ -83,7 +83,7 @@ func TestGetManyStruct(t *testing.T) {
 	if em := cmp.Diff(len(zeelist), 2); em != "" {
 		t.Fatal(em)
 	}
-	expected := []interface{}{"uuu","yty"}
+	expected := []interface{}{"uuu", "yty"}
 	if em := cmp.Diff(zeelist, expected); em != "" {
 		t.Error(em)
 	}
@@ -109,7 +109,7 @@ func TestGetNumberAddress(t *testing.T) {
 func TestGetRoot(t *testing.T) {
 	t.Parallel()
 	focus := 0x44
-	
+
 	v, err := Get(focus, "")
 	if em := cmp.Diff(err, nil); em != "" {
 		t.Fatal(em)
