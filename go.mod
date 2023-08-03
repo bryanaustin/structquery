@@ -1,4 +1,4 @@
-module github.com/ETLHero/structquery
+module github.com/bryanaustin/structquery
 
 go 1.20
 
