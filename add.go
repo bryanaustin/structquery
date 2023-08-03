@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// Add adds the provided value at the specified path. Overrides the value if target is
+// Add the provided value at the specified path. Overrides the value if target is
 // a field. If target is a slice, append to slice. If target is a map and the key
 // doesn't exist, create the key with value. If target is a map and the key does exist,
 // override the value.
@@ -29,15 +29,12 @@ func Add(obj any, path string, value any) error {
 			}
 			continue
 		}
-		// Map index already exists, just overriding
-		if !vs[i].Child.CanSet() {
-			if vs[i].Parent != nil {
-				if serr := setMap(*vs[i].Parent, last, v); serr != nil {
-					err = multierror.Append(err, fmt.Errorf("fallback add to new key to map: %w", serr))
-				}
-				continue
+		// Both parent and child exist
+		if vs[i].Parent != nil {
+			// Map index already exists, just overriding
+			if serr := setMap(*vs[i].Parent, last, v); serr != nil {
+				err = multierror.Append(err, fmt.Errorf("fallback add to new key to map: %w", serr))
 			}
-			err = multierror.Append(err, ErrCantSet)
 			continue
 		}
 		if vs[i].Child.Kind() == reflect.Slice {
