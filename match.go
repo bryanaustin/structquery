@@ -19,6 +19,7 @@ var (
 	ErrInvalidIndex     = errors.New("invlaid index")
 	ErrInvalidFieldName = errors.New("invlaid field name")
 	ErrInvalidKey       = errors.New("invlaid key")
+	ErrNilPointer       = errors.New("nil pointer")
 )
 
 // Match will find elements of the provided obj and return refrences to their values
@@ -82,6 +83,9 @@ func matchSingleRecursive(v reflect.Value, path []string) ([]MatchStack, error) 
 		c := v.Index(i)
 		return matchRecursive(c, nupath)
 	case reflect.Pointer:
+		if v.IsNil() {
+			return nil, ErrNilPointer
+		}
 		return matchRecursive(v.Elem(), nupath)
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnsupportedType, v.Type())
@@ -125,6 +129,9 @@ func matchAllRecursive(v reflect.Value, path []string) (svs []MatchStack, serrs 
 		}
 		return
 	case reflect.Pointer:
+		if v.IsNil() {
+			return nil, ErrNilPointer
+		}
 		return matchRecursive(v.Elem(), nupath)
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnsupportedType, v.Type())

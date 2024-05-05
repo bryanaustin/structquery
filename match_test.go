@@ -158,6 +158,8 @@ func TestPointerStruct(t *testing.T) {
 	}
 }
 
+//TODO: test nil pointer error
+
 func checkErrs(t *testing.T, err error) {
 	t.Helper()
 	if err == nil {
