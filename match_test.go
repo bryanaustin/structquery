@@ -131,6 +131,33 @@ func TestMapNilChild(t *testing.T) {
 	}
 }
 
+type PS3 struct {
+	Number int
+}
+
+type PS2 struct {
+	Childer *PS3
+}
+
+type PS1 struct {
+	Child *PS2
+}
+
+func TestPointerStruct(t *testing.T) {
+	t.Parallel()
+	focus := PS1{Child:&PS2{Childer:&PS3{Number:7}}}
+	ms, errs := Match(focus, []string{"Child", "Childer", "Number"})
+	checkErrs(t, errs)
+	// I need to document how parent firld works
+	//expectedparent := reflect.ValueOf(focus.Child)
+	expectedchild := reflect.ValueOf(focus.Child.Childer.Number)
+	//expected := []MatchStack{{Parent: &expectedparent, Child:&expectedchild}}
+	expected := []MatchStack{{Child:&expectedchild}}
+	if msg := cmp.Diff(ms, expected); msg != "" {
+		t.Error(msg)
+	}
+}
+
 func checkErrs(t *testing.T, err error) {
 	t.Helper()
 	if err == nil {
